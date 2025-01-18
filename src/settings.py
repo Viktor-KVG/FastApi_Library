@@ -8,6 +8,6 @@ DB_NAME = "postgres_library"
 DB_SESSION_ECHO = True # Используется при создании engine
 
 
-SECRET_KEY = "VX0KvQRUTNOJRJJyAVntIsTUiJ+h4uvg+lcpJtB7elI="
+SECRET_KEY = "29c1b96c17b6881edf2e32d85e7ff6ce88b9b5ba6facba5cff2fb10a0082630d"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
