@@ -1,42 +1,29 @@
+
 version: '3'
 
 services:
 
-  
   db:
-  
     image: postgres:14-alpine3.19  
-
     container_name: postgres_library
     ports:
       - '6000:5432'
-      
     environment:
       - 'POSTGRES_PASSWORD=1234567890'
       - 'POSTGRES_USER=postgres_library'
       - 'POSTGRES_DB=postgres_library'
 
-
   src:
     build: .
-
     environment:
-       - SQL_DATABASE_URL=postgresql+psycopg2://postgres:1234567890@db:6000/postgres_library
-
+       - SQL_DATABASE_URL=postgresql+psycopg2://postgres:1234567890@db:6000/postgres_library  
     ports:
        - '8000:8000'
-
-    command: python ./main.py
-
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload  
     tty: true
     stdin_open: true
-
-    # command: uvicorn src.main:app --host 0.0.0.0 --port 7000 --reload
-
-
-    # network_mode: host
     depends_on:
       - db
-
-
+    volumes:
+      - .:/FastApi_Library  # Монтируем текущую директорию в контейнер
 

@@ -1,6 +1,5 @@
 FROM python:3.11.9-alpine3.19
 
-
 RUN pip install --upgrade pip
 
 # Копируем файл requirements.txt в контейнер
@@ -16,5 +15,5 @@ COPY . /FastApi_Library
 WORKDIR /FastApi_Library
 
 
-CMD [ "uvicorn src.main:app --reload" ]
+CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"]
 
