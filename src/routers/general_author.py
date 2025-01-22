@@ -1,3 +1,6 @@
+'''Этот файл определяет эндпоинты для управления авторами в приложении, включая создание, редактирование, 
+   удаление и получение списка авторов. Эндпоинты для создания, редактирования и удаления авторов защищены 
+   и доступны только администраторам, в то время как эндпоинт для получения списка авторов доступен всем пользователям.'''
 
 import logging
 from typing import List
@@ -5,7 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.auth.auth_jwt import get_current_user
 import core.core_author
-from src.models import AuthorModel, UserModel
+from src.models import UserModel
 from src.schemas import AuthorsModel, CreateAuthorsModel, SearchAuthorsModel
 from src.database import get_db
 from fastapi_jwt import JwtAccessBearer
@@ -52,7 +55,7 @@ def put_author_id(author_id: int, user_update: CreateAuthorsModel,
     if author_put == False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Invalid user '
+            detail='Invalid author '
         )
 
 
@@ -72,12 +75,15 @@ def delete_author_id(author_id: int, db: Session = Depends(get_db), current_user
     if author_del == False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Invalid user '
+            detail='Invalid author '
         ) 
     
 
-# Эндпоинт для получения списка авторов (только для администраторов)
+# Эндпоинт для получения списка авторов 
 @api_router.get("/author/list", response_model=List[AuthorsModel])
-def list_authors(author_id: int = None, author_name: str = None, db: Session = Depends(get_db)):
-    result_list = core.core_author.search_list_authors(SearchAuthorsModel(id=author_id, name=author_name),  db)
-    return result_list    
+def list_authors(author_id: int = None, author_name: str = None, limit: int = 10, offset: int = 0, db: Session = Depends(get_db)):
+    result_list = core.core_author.search_list_authors(
+        SearchAuthorsModel(id=author_id, name=author_name, limit=limit, offset=offset),  
+        db
+    )
+    return result_list 
