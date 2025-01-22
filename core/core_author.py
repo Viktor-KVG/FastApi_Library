@@ -1,24 +1,13 @@
+'''Файл отвечает за операции CRUD (создание, чтение, обновление и удаление)и поск для модели авторов'''
 
-from datetime import datetime
-from hashlib import md5
 import logging
 from fastapi import HTTPException, status
-from src.auth import auth_jwt
-from src.models import AuthorModel, BookModel, UserModel
+from src.models import AuthorModel
 from src.schemas import (
                          AuthorsModel,
-                         BooksModel,
                          CreateAuthorsModel,
                          SearchAuthorsModel,
-                         UserCreate,
-                         UserId, 
-                         UserLogin, 
-                         UserCreateResponse,
-                         UserList, 
-                         UserUpdate,
-                         SearchUsersList,
                          )
-from src.database import session_factory
 from sqlalchemy.orm import Session
 
 
@@ -66,11 +55,13 @@ def search_author_by_id_for_delete(author_id:int, db: Session):
 
 def search_list_authors(data: SearchAuthorsModel, db: Session) -> list:
     query = db.query(AuthorModel)
-    # Добавим условия к запросу, если они указаны
+
     if data.id is not None:
         query = query.filter(AuthorModel.id == data.id)
     if data.name:
-        query = query.filter(AuthorModel.name == data.name)
+        query = query.filter(AuthorModel.name.ilike(f"%{data.name}%"))  # ilike для частичного совпадения
+
+    query = query.limit(data.limit).offset(data.offset)   
     filtered_authors = query.all()            
     return filtered_authors
 
