@@ -1,9 +1,29 @@
+'''Модели данных для управления книгами, авторами и пользователями в приложении. 
+   Используются классы Pydantic для валидации и сериализации данных. 
+   Определены модели для заказов, авторов, книг и пользователей с соответствующими полями и валидаторами. 
+   Каждая модель включает конфигурацию для поддержки атрибутов из базы данных. 
+   Эти модели обеспечивают структурированное взаимодействие с данными и помогают поддерживать целостность данных.'''
+
 from datetime import date, datetime
-from typing import  Optional, Union, List
-from fastapi import Query
+from typing import  Optional, List
 from pydantic import BaseModel, Field, validator
 
-'''Author'''
+
+'''Order Books'''
+class OrdersModel(BaseModel):
+    id: int
+    book_id: int
+    user_id: int
+    loan_date: datetime
+    return_date: Optional[datetime]
+    status: str = Field(..., description="Select 'taken' or 'returned'")
+
+    class Config:
+        from_attributes = True
+
+
+
+'''Authors'''
 class AuthorsModel(BaseModel):
     id: int
     name: str
@@ -47,12 +67,14 @@ class AuthorId(BaseModel):
 class SearchAuthorsModel(BaseModel):
     id: Optional[int] = None
     name: Optional[str] = None
+    limit: int = 10  # Количество записей на странице
+    offset: int = 0  # Смещение для пагинации
 
     class Config:
         from_attributes = True 
 
 
-'''Book'''
+'''Books'''
 class BooksModel(BaseModel):
     id: int
     title: str
@@ -64,7 +86,7 @@ class BooksModel(BaseModel):
 
     class Config:
         from_attributes = True
-        allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class BookListModel(BaseModel):
@@ -132,6 +154,19 @@ class PutBook(BaseModel):
 class SearchBooksList(BaseModel):
     id: Optional[int] = None
     title: Optional[str] = None
+    limit: int = 10  
+    offset: int = 0  
+    @validator('limit')
+    def validate_limit(cls, v):
+        if v <= 0:
+            raise ValueError('The limit must be greater than 0')
+        return v
+
+    @validator('offset')
+    def validate_offset(cls, v):
+        if v < 0:
+            raise ValueError('Offset must be non-negative')
+        return v
 
     class Config:
         from_attributes = True 
@@ -144,7 +179,7 @@ class UserForAdmin(BaseModel):
     email: str
     created_at: datetime
     updated_at: datetime
-    is_admin: bool
+    is_admin: bool 
     books: list[BooksModel] = []
 
     class Config:
@@ -176,7 +211,7 @@ class UserCreate(BaseModel):
     login: str
     password: str
     email: str
-    is_admin: Optional[bool] = False
+    is_admin: Optional[bool] = Field(False, description="Выберите True или False для указания, является ли пользователь администратором")
 
     @validator('login')
     def validate_login(cls, value):
@@ -250,8 +285,31 @@ class SearchUsersList(BaseModel):
     id: Optional[int] = None
     login: Optional[str] = None
     email: Optional[str] = None 
+    limit: int = 10  
+    offset: int = 0 
+    @validator('limit')
+    def validate_limit(cls, v):
+        if v > 100:
+            raise ValueError('Limit must be less than or equal to 100')
+        return v
+
+    @validator('offset')
+    def validate_offset(cls, v):
+        if v < 0:
+            raise ValueError('Offset must be a non-negative integer')
+        return v 
       
     class Config:
-        from_attributes = True         
+        from_attributes = True  
+
+
+class PaginatedUsersModel(BaseModel):
+    total: int
+    page: int
+    size: int
+    users: List[UserList]
+
+    class Config:
+        from_attributes = True               
 
 
