@@ -1,11 +1,15 @@
+'''Этот файл определяет эндпоинты для управления книгами в приложении, включая создание, редактирование, 
+   удаление и получение списка книг. Все операции защищены и доступны только администраторам, 
+   что обеспечивает безопасность и контроль над библиотекой.'''
+
 import logging
 from typing import List
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.auth.auth_jwt import get_current_user
 import core.core_book
-from src.models import AuthorModel, UserModel
-from src.schemas import AuthorsModel, BooksModel, CreateAuthorsModel, CreateBookModel, SearchAuthorsModel, SearchBooksList
+from src.models import UserModel
+from src.schemas import BooksModel, CreateBookModel, SearchBooksList
 from src.database import get_db
 from fastapi_jwt import JwtAccessBearer
 from src.settings import SECRET_KEY
@@ -57,8 +61,10 @@ def delete_book_id(book_id: int, db: Session = Depends(get_db), current_user: Us
     return book_del  
 
 
-# Эндпоинт для получения списка книг (только для администраторов)
+# Эндпоинт для получения списка книг 
 @api_router.get("/book/list", response_model=List[BooksModel])
-def list_books(book_id: int = None, book_title: str = None, db: Session = Depends(get_db)):
-    result_list = core.core_book.search_list_books(SearchBooksList(id=book_id, title=book_title),  db)
-    return result_list 
+def list_books(book_id: int = None, book_title: str = None, limit: int = 10,  
+               offset: int = 0, db: Session = Depends(get_db)):
+    search_params = SearchBooksList(id=book_id, title=book_title, limit=limit, offset=offset)   
+    result_list = core.core_book.search_list_books(search_params, db)
+    return result_list
