@@ -1,3 +1,5 @@
+'''Файл настройки базы данных, который создает подключение к PostgreSQL с использованием SQLAlchemy.'''
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.settings import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
