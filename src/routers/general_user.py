@@ -1,27 +1,25 @@
 """
-Общий файл для всех роутеров. Если возникнет необходимость, то его можно поделить на отдельные файлы по сгруппированным endpoint'ам
-Например: routers/user.py, routers/board.py и т.д.
-"""
-
+    Этот файл определяет несколько эндпоинтов для управления пользователями в приложении, включая защищенный эндпоинт 
+    для тестирования прав доступа, создание и аутентификацию пользователей, а также обновление и удаление учетных записей 
+    (только для администраторов). Эндпоинты используют зависимости для работы с базой данных и проверки прав доступа, 
+    обеспечивая безопасность и целостность операций с пользователями."""
 
 import logging
-from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from fastapi_jwt import JwtAccessBearer
 from src.settings import SECRET_KEY
-
 from src.auth.auth_jwt import get_current_user, authenticate_user
 from src.models import UserModel
 from src.database import get_db
 from src.schemas import (
+    PaginatedUsersModel,
     SearchUsersList,
     Token,
     UserCreate,
     UserCreateResponse,
     UserForAdmin,
     UserId,
-    UserList,
     UserLogin,
     UserUpdate
 )
@@ -61,9 +59,9 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
     if core.core_user.is_user_exist(data):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='User  already exists'
+            detail='User already exists'
         )
-    return core.core_user.register_user(data)
+    return core.core_user.register_user(data, db)
 
 
 # Эндпоинт для аутентификации пользователя
@@ -73,7 +71,7 @@ def user_login_jwt(data: UserLogin, db: Session = Depends(get_db)):
     if auth_result:
         return {'token': auth_result['token']} 
       
-    logger.warning("Неверные учетные данные для пользователя: %s", data.login)
+    logger.warning(f"Неверные учетные данные для пользователя: {data.login}")
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail='Authentication error, incorrect credentials'
@@ -126,14 +124,17 @@ def delete_user_id(user_id: int, db: Session = Depends(get_db), current_user: Us
         )  
 
 
-# Эндпоинт для получения списка читателей (только для администраторов)
-@api_router.get("/user/list", response_model=List[UserList])
+#Эндпоинт для получения списка читателей (только для администраторов)
+@api_router.get("/user/list", response_model=PaginatedUsersModel)
 def list_readers(user_id: int = None, user_login: str = None, user_email: str = None, 
-                 db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+                 limit: int = 10, offset: int = 0, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
     if not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Not authorized to access this resource')   
-    result_list = core.core_user.search_list_users(SearchUsersList(id=user_id, login=user_login, email=user_email), db)
-    return result_list
+    total = db.query(UserModel).count()  # Общее количество пользователей
+    result_list = core.core_user.search_list_users(SearchUsersList(id=user_id, login=user_login, email=user_email, limit=limit, offset=offset), db)
+    return PaginatedUsersModel(total=total, page=offset // limit + 1, size=limit, users=result_list)
+
+
 
 
 
