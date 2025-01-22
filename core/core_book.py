@@ -1,26 +1,14 @@
+'''Файл отвечает за операции CRUD (создание, чтение, обновление и удаление)и поск для модели книг'''
 
-from datetime import datetime
-from hashlib import md5
 import logging
 from fastapi import HTTPException, status
-from src.auth import auth_jwt
-from src.models import AuthorModel, BookModel, UserModel
+from src.models import AuthorModel, BookModel
 from src.schemas import (
                          AuthorsModel,
                          BooksModel,
-                         CreateAuthorsModel,
                          CreateBookModel,
-                         SearchAuthorsModel,
                          SearchBooksList,
-                         UserCreate,
-                         UserId, 
-                         UserLogin, 
-                         UserCreateResponse,
-                         UserList, 
-                         UserUpdate,
-                         SearchUsersList,
                          )
-from src.database import session_factory
 from sqlalchemy.orm import Session
 
 
@@ -101,9 +89,10 @@ def search_list_books(data: SearchBooksList, db: Session) -> list:
     if data.id is not None:
         query = query.filter(BookModel.id == data.id)
     if data.title:
-        query = query.filter(BookModel.title == data.title)  # Исправлено: BookModel.name на BookModel.title
-    
-    filtered_books = query.all()          
+        query = query.filter(BookModel.title == data.title)
+
+    # Применяем пагинацию
+    filtered_books = query.offset(data.offset).limit(data.limit).all()          
     result_list = []
 
     for book in filtered_books:
