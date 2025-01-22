@@ -1,15 +1,18 @@
+'''Этот файл содержит функции для аутентификации пользователей и работы с JWT-токенами. 
+   Он включает создание JWT-токена с заданным временем истечения, а также проверку учетных 
+   данных пользователя при входе в систему. Функция get_user извлекает пользователя из 
+   базы данных по логину, а get_current_user обеспечивает доступ к текущему пользователю 
+   на основе токена аутентификации. Логирование используется для отслеживания процесса 
+   аутентификации и выявления ошибок.'''
+
 import logging
 from fastapi import Depends, HTTPException, logger, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from hashlib import md5
 from sqlalchemy.orm import Session
-import fastapi_jwt
 import jwt
-from fastapi.encoders import jsonable_encoder
-from src.schemas import UserInDB, UserLogin
+from src.schemas import UserInDB
 from src.models import UserModel
-from src.database import get_db, session_factory
-import hashlib
+from src.database import get_db
 from src.settings import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 from datetime import datetime, timedelta
 from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
