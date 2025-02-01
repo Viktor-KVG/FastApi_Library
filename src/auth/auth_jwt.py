@@ -37,13 +37,16 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 
 # Создание JWT токена по входящим данным
 def authenticate_user(db: Session, login: str, password: str):
+    logger.info(f"Начинаем аутентификацию для пользователя: {login}")
     user = db.query(UserModel).filter(UserModel.login == login).first()
     if user:
+        logger.info(f"Пользователь найден: {login}")
         # Логируем хэш пароля
         logger.info(f"Проверяем хэш пароля для пользователя: {login}")
         password_hash = md5(password.encode('utf-8')).hexdigest()
         logger.info(f"Введенный хэш пароля: {password_hash}, Хэш из БД: {user.password_hash}")       
         if user.password_hash == password_hash:
+            logger.info("Аутентификация успешна")
             # Подготовка данных для токена
             token_data = {
                 "subject": user.login,
@@ -51,7 +54,9 @@ def authenticate_user(db: Session, login: str, password: str):
             }
             # Создание токена
             token = create_access_token(data=token_data, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-            return {'user': user, 'token': token}   
+            logger.info(f"Создан токен для пользователя: {login}")
+            return {'user': user, 'token': token}
+        logger.warning(f"Пользователь не найден: {login}")   
     return None
 
 

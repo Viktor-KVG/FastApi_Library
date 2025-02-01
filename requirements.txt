@@ -10,3 +10,4 @@ httpx==0.28.1
 fastapi-jwt==0.3.0
 authlib==1.1.0
 python-jose==3.3.0
+pytest-mock==3.14.0
